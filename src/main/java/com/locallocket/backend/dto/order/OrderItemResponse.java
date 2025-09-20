@@ -1,9 +1,9 @@
-package com.locallocket.backend.dto.cart;
+package com.locallocket.backend.dto.order;
 
-import com.locallocket.backend.entity.CartItem;
+import com.locallocket.backend.entity.OrderItem;
 import java.math.BigDecimal;
 
-public class CartItemResponse {
+public class OrderItemResponse {
     private Long id;
     private Long productId;
     private String productName;
@@ -12,23 +12,20 @@ public class CartItemResponse {
     private Integer quantity;
     private BigDecimal priceAtTime;
     private BigDecimal totalPrice;
-    private Boolean productAvailable; // Check if product is still in stock
 
     // Default constructor
-    public CartItemResponse() {}
+    public OrderItemResponse() {}
 
-    // Constructor from CartItem entity
-    public CartItemResponse(CartItem cartItem) {
-        this.id = cartItem.getId();
-        this.productId = cartItem.getProduct().getId();
-        this.productName = cartItem.getProduct().getName();
-        this.productDescription = cartItem.getProduct().getDescription();
-        this.productImageUrl = cartItem.getProduct().getImageUrl();
-        this.quantity = cartItem.getQuantity();
-        this.priceAtTime = cartItem.getPriceAtTime();
-        this.totalPrice = cartItem.getTotalPrice();
-        this.productAvailable = cartItem.getProduct().getStock() >= cartItem.getQuantity()
-                && cartItem.getProduct().getIsActive();
+    // Constructor from OrderItem entity
+    public OrderItemResponse(OrderItem orderItem) {
+        this.id = orderItem.getId();
+        this.productId = orderItem.getProduct().getId();
+        this.productName = orderItem.getProductName();
+        this.productDescription = orderItem.getProductDescription();
+        this.productImageUrl = orderItem.getProductImageUrl();
+        this.quantity = orderItem.getQuantity();
+        this.priceAtTime = orderItem.getPriceAtTime();
+        this.totalPrice = orderItem.getTotalPrice();
     }
 
     // Complete Getters and Setters
@@ -55,7 +52,4 @@ public class CartItemResponse {
 
     public BigDecimal getTotalPrice() { return totalPrice; }
     public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
-
-    public Boolean getProductAvailable() { return productAvailable; }
-    public void setProductAvailable(Boolean productAvailable) { this.productAvailable = productAvailable; }
 }

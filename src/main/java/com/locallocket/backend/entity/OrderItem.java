@@ -7,15 +7,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cart_items")
-public class CartItem {
+@Table(name = "order_items", indexes = {
+        @Index(name = "idx_order_items_order_id", columnList = "order_id"),
+        @Index(name = "idx_order_items_product_id", columnList = "product_id")
+})
+public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "cart_id")
-    private Cart cart;
+    @JoinColumn(name = "order_id")
+    private Order order;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
@@ -25,26 +28,41 @@ public class CartItem {
     private Integer quantity;
 
     @Column(name = "price_at_time", precision = 12, scale = 2, nullable = false)
-    private BigDecimal priceAtTime;
+    private BigDecimal priceAtTime; // Product price when order was placed
 
     @Column(name = "total_price", precision = 12, scale = 2, nullable = false)
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice; // quantity * priceAtTime
+
+    @Column(name = "product_name", nullable = false) // Snapshot of product name
+    private String productName;
+
+    @Column(name = "product_description") // Snapshot of product description
+    private String productDescription;
+
+    @Column(name = "product_image_url") // Snapshot of product image
+    private String productImageUrl;
 
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     // Constructors
-    public CartItem() {}
+    public OrderItem() {}
 
-    public CartItem(Cart cart, Product product, Integer quantity, BigDecimal priceAtTime) {
-        this.cart = cart;
+    public OrderItem(Order order, Product product, Integer quantity, BigDecimal priceAtTime) {
+        this.order = order;
         this.product = product;
         this.quantity = quantity;
         this.priceAtTime = priceAtTime;
         this.totalPrice = priceAtTime.multiply(BigDecimal.valueOf(quantity));
+
+        // Snapshot product details
+        this.productName = product.getName();
+        this.productDescription = product.getDescription();
+        this.productImageUrl = product.getImageUrl();
     }
 
+    // Helper method
     public void updateTotalPrice() {
         this.totalPrice = this.priceAtTime.multiply(BigDecimal.valueOf(this.quantity));
     }
@@ -53,8 +71,8 @@ public class CartItem {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Cart getCart() { return cart; }
-    public void setCart(Cart cart) { this.cart = cart; }
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
 
     public Product getProduct() { return product; }
     public void setProduct(Product product) { this.product = product; }
@@ -73,6 +91,15 @@ public class CartItem {
 
     public BigDecimal getTotalPrice() { return totalPrice; }
     public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
+
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+
+    public String getProductDescription() { return productDescription; }
+    public void setProductDescription(String productDescription) { this.productDescription = productDescription; }
+
+    public String getProductImageUrl() { return productImageUrl; }
+    public void setProductImageUrl(String productImageUrl) { this.productImageUrl = productImageUrl; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

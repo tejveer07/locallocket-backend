@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LocalLocket Payment Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .input-group { margin: 15px 0; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #3399cc; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin: 10px 5px; }
+        button:hover { background: #2288bb; }
+        .success-btn { background: #28a745; }
+        .success-btn:hover { background: #218838; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .test-cards { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .test-cards h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛒 LocalLocket Payment Test</h1>
+
+    <div class="input-group">
+        <label>Customer JWT Token:</label>
+        <input type="text" id="customerToken" placeholder="Paste your customer JWT token here">
+    </div>
+
+    <div class="input-group">
+        <label>Order ID:</label>
+        <input type="number" id="orderId" value="1" placeholder="Enter order ID">
+    </div>
+
+    <button onclick="startPayment()">💳 Start Payment Process</button>
+    <button onclick="checkOrderStatus()" class="success-btn">📊 Check Order Status</button>
+
+    <div class="test-cards">
+        <h3>🧪 Test Cards:</h3>
+        <p><strong>Success:</strong> 4111111111111111 (CVV: 123, Expiry: 12/25)</p>
+        <p><strong>Failure:</strong> 4000000000000002 (CVV: 123, Expiry: 12/25)</p>
+        <p><strong>UPI Success:</strong> success@razorpay</p>
+    </div>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8080';
+
+    async function startPayment() {
+        const customerToken = document.getElementById('customerToken').value.trim();
+        const orderId = document.getElementById('orderId').value;
+
+        if (!customerToken) {
+            showResult('❌ Please enter customer JWT token', 'error');
+            return;
+        }
+
+        showResult('🔄 Creating payment order...', 'info');
+
+        try {
+            // Step 1: Create payment order
+            const response = await fetch(`${API_BASE}/api/payments/create-order`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${customerToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ orderId: parseInt(orderId) })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const paymentOrder = await response.json();
+            console.log('Payment Order Created:', paymentOrder);
+
+            showResult(`✅ Payment order created successfully!<br>Order ID: ${paymentOrder.razorpayOrderId}<br>Amount: ₹${paymentOrder.amount}`, 'success');
+
+            // Step 2: Initialize Razorpay checkout
+            setTimeout(() => {
+                const options = {
+                    key: paymentOrder.razorpayKeyId,
+                    amount: paymentOrder.amount * 100, // Convert to paise
+                    currency: paymentOrder.currency,
+                    order_id: paymentOrder.razorpayOrderId,
+                    name: 'LocalLocket',
+                    description: paymentOrder.description,
+                    image: 'https://via.placeholder.com/100x100?text=LL',
+                    handler: function (razorpayResponse) {
+                        verifyPayment(paymentOrder.paymentId, razorpayResponse);
+                    },
+                    prefill: {
+                        name: paymentOrder.customerName,
+                        email: paymentOrder.customerEmail,
+                        contact: paymentOrder.customerPhone
+                    },
+                    theme: {
+                        color: '#3399cc'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            showResult('❌ Payment cancelled by user', 'error');
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error creating payment:', error);
+            showResult(`❌ Error creating payment: ${error.message}`, 'error');
+        }
+    }
+
+    async function verifyPayment(paymentId, razorpayResponse) {
+        const customerToken = document.getElementById('customerToken').value.trim();
+
+        showResult('🔄 Verifying payment...', 'info');
+
+        try {
+            const response = await fetch(`${API_BASE}/api/payments/verify`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${customerToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    paymentId: paymentId,
+                    razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+                    razorpaySignature: razorpayResponse.razorpay_signature
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('Payment verification result:', result);
+
+            showResult(`
+                <h3>🎉 Payment Successful!</h3>
+                <p><strong>Payment ID:</strong> ${result.razorpayPaymentId}</p>
+                <p><strong>Status:</strong> ${result.status}</p>
+                <p><strong>Amount:</strong> ₹${result.amount}</p>
+                <p><strong>Method:</strong> ${result.paymentMethod || 'N/A'}</p>
+                <br>
+                <p>✅ <strong>Webhook should be processed automatically!</strong></p>
+                <p>Check your backend logs for webhook processing.</p>
+            `, 'success');
+
+        } catch (error) {
+            console.error('Error verifying payment:', error);
+            showResult(`❌ Payment verification failed: ${error.message}`, 'error');
+        }
+    }
+
+    async function checkOrderStatus() {
+        const customerToken = document.getElementById('customerToken').value.trim();
+        const orderId = document.getElementById('orderId').value;
+
+        if (!customerToken) {
+            showResult('❌ Please enter customer JWT token', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/api/customer/orders/${orderId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${customerToken}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+
+            const order = await response.json();
+            console.log('Order status:', order);
+
+            showResult(`
+                <h3>📊 Order Status</h3>
+                <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+                <p><strong>Payment Status:</strong> ${order.paymentStatus}</p>
+                <p><strong>Total Amount:</strong> ₹${order.totalAmount}</p>
+                <p><strong>Created:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+                ${order.paymentMethod ? `<p><strong>Payment Method:</strong> ${order.paymentMethod}</p>` : ''}
+            `, 'info');
+
+        } catch (error) {
+            console.error('Error checking order status:', error);
+            showResult(`❌ Error checking order: ${error.message}`, 'error');
+        }
+    }
+
+    function showResult(message, type) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+        resultDiv.className = type;
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,5 +45,24 @@ public class GlobalExceptionHandler {
         error.put("error", "Internal server error: " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(VendorConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleVendorConflictException(VendorConflictException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "VENDOR_CONFLICT");
+        error.put("message", ex.getMessage());
+        error.put("action", "SWITCH_VENDOR_REQUIRED");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentException(PaymentException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "PAYMENT_ERROR");
+        error.put("message", ex.getMessage());
+        error.put("timestamp", LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
 }
 
