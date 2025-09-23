@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM openjdk:21-jdk-slim
 
 WORKDIR /app
 
@@ -15,7 +15,6 @@ RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
 COPY src src/
-
 # Build the application
 RUN ./mvnw clean package -DskipTests
 
