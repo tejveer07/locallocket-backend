@@ -2,20 +2,22 @@ FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first for better caching
-COPY mvnw .
-COPY mvnw.cmd .
-COPY .mvn .mvn
+# Copy Maven wrapper files (only if they exist)
+COPY mvnw* ./
+COPY .mvn .mvn/
 COPY pom.xml .
 
-# Download dependencies
+# Make mvnw executable (in case it's not)
+RUN chmod +x mvnw
+
+# Download dependencies first (for better Docker layer caching)
 RUN ./mvnw dependency:go-offline -B
 
 # Copy source code
-COPY src src
+COPY src src/
 
-# Build application
-RUN ./mvnw package -DskipTests
+# Build the application
+RUN ./mvnw clean package -DskipTests
 
 # Expose port
 EXPOSE 8080
