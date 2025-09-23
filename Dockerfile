@@ -7,6 +7,10 @@ COPY mvnw* ./
 COPY .mvn .mvn/
 COPY pom.xml .
 
+# inside Dockerfile
+COPY .env /app/.env
+
+
 # Make mvnw executable (in case it's not)
 RUN chmod +x mvnw
 
