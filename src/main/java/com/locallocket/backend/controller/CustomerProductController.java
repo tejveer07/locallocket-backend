@@ -26,7 +26,7 @@ public class CustomerProductController {
     public ResponseEntity<Page<VendorResponse>> getNearbyVendors(
             @RequestParam Double lat,
             @RequestParam Double lon,
-            @RequestParam(defaultValue = "1000") Integer radius, // meters
+            @RequestParam(defaultValue = "5") Integer radius, // Change to KM
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "shopName") String sortBy,
@@ -41,6 +41,7 @@ public class CustomerProductController {
         Page<VendorResponse> vendors = customerProductService.getNearbyVendors(lat, lon, radius, pageable);
         return ResponseEntity.ok(vendors);
     }
+
 
     // Get products from specific vendor
     @GetMapping("/vendors/{vendorId}/products")

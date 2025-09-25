@@ -27,7 +27,10 @@ public class CustomerProductService {
     private ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public Page<VendorResponse> getNearbyVendors(Double lat, Double lon, Integer radius, Pageable pageable) {
+    public Page<VendorResponse> getNearbyVendors(Double lat, Double lon, Integer radiusMeters, Pageable pageable) {
+        // Convert meters to kilometers for calculation
+        double radiusKm = radiusMeters / 1000.0;
+
         // Get all active vendors
         List<Vendor> allVendors = vendorRepository.findByIsActiveTrue();
 
@@ -35,10 +38,10 @@ public class CustomerProductService {
         List<VendorResponse> nearbyVendors = allVendors.stream()
                 .filter(vendor -> vendor.getLatitude() != null && vendor.getLongitude() != null)
                 .map(vendor -> {
-                    double distance = calculateDistance(lat, lon, vendor.getLatitude(), vendor.getLongitude());
-                    return new VendorResponse(vendor, distance);
+                    double distanceKm = calculateDistance(lat, lon, vendor.getLatitude(), vendor.getLongitude());
+                    return new VendorResponse(vendor, distanceKm);
                 })
-                .filter(vendorResponse -> vendorResponse.getDistance() <= radius)
+                .filter(vendorResponse -> vendorResponse.getDistance() <= radiusKm) // Compare KM to KM
                 .sorted((v1, v2) -> Double.compare(v1.getDistance(), v2.getDistance()))
                 .collect(Collectors.toList());
 
@@ -49,6 +52,7 @@ public class CustomerProductService {
         List<VendorResponse> pageContent = nearbyVendors.subList(start, end);
         return new PageImpl<>(pageContent, pageable, nearbyVendors.size());
     }
+
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> getVendorProducts(Long vendorId, String query, Pageable pageable) {
@@ -123,18 +127,37 @@ public class CustomerProductService {
         return new VendorResponse(vendor);
     }
 
-    // Haversine formula to calculate distance between two points
+//    // Haversine formula to calculate distance between two points
+//    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+//        final int R = 6371; // Radius of the earth in km
+//
+//        double latDistance = Math.toRadians(lat2 - lat1);
+//        double lonDistance = Math.toRadians(lon2 - lon1);
+//        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+//                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+//                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//        double distance = R * c * 1000; // convert to meters
+//
+//        return distance;
+//    }
+
+    // Add this method to your CustomerProductService class
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // Radius of the earth in km
+        // Haversine formula to calculate distance between two coordinates in kilometers
+        double earthRadius = 6371; // Earth radius in kilometers
 
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double lat1Rad = Math.toRadians(lat1);
+        double lat2Rad = Math.toRadians(lat2);
+        double deltaLat = Math.toRadians(lat2 - lat1);
+        double deltaLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                        Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double distance = R * c * 1000; // convert to meters
 
-        return distance;
+        return earthRadius * c; // Distance in kilometers
     }
 }
