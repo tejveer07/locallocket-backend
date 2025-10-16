@@ -1,16 +1,30 @@
-# Use Maven to build JAR inside Docker
-FROM maven:3.9.3-openjdk-21 AS build
+# ---------- Build stage (Maven + JDK) ----------
+# Use a known-working Maven image with Temurin JDK 21 on Docker Hub
+FROM maven:3.9.3-eclipse-temurin-21 AS build
+
 WORKDIR /app
+
+# Copy pom first to cache dependencies
 COPY pom.xml .
+
+# Pre-download dependencies for faster builds
+RUN mvn -B dependency:go-offline
+
+# Copy source and package
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn -B clean package -DskipTests
 
-# Use slim JDK for runtime
-FROM openjdk:21-jdk-slim
+# ---------- Runtime stage (smaller image) ----------
+FROM eclipse-temurin:21-jre-jammy
+
 WORKDIR /app
-COPY --from=build /app/target/locallocket-0.0.1-SNAPSHOT.jar app.jar
 
+# Copy the fat jar produced by Spring Boot (wildcard to avoid name issues)
+COPY --from=build /app/target/*.jar app.jar
+
+# Important: Back4App uses a PORT env variable for health checks; we expose 8080
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","app.jar"]
+# Entrypoint runs the jar
+ENTRYPOINT ["sh","-c","java -jar /app/app.jar"]
