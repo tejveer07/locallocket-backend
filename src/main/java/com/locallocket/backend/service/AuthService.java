@@ -60,7 +60,7 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         // Find user by email or phone
         User user = userRepository.findByEmailOrPhoneNumber(request.getEmailOrPhone())
-                .orElseThrow(() -> new UnauthorizedException("Invalid email/phone or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email/phone number"));
 
         // Check if user is active
         if (!user.getIsActive()) {
@@ -69,7 +69,7 @@ public class AuthService {
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new UnauthorizedException("Invalid email/phone or password");
+            throw new UnauthorizedException("Invalid password");
         }
 
         // Generate JWT token

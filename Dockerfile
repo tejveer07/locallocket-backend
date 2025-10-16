@@ -1,29 +1,21 @@
+# Use OpenJDK 21 for Spring Boot 3.x
 FROM openjdk:21-jdk-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper files (only if they exist)
-COPY mvnw* ./
-COPY .mvn .mvn/
+# Copy pom.xml and source code
 COPY pom.xml .
+COPY src ./src
 
-# inside Dockerfile
-#COPY .env /app/.env
+# Build the application (using Maven wrapper or preinstalled Maven)
+RUN apt-get update && apt-get install -y maven && mvn clean package -DskipTests
 
-
-# Make mvnw executable (in case it's not)
-RUN chmod +x mvnw
-
-# Download dependencies first (for better Docker layer caching)
-RUN ./mvnw dependency:go-offline -B
-
-# Copy source code
-COPY src src/
-# Build the application
-RUN ./mvnw clean package -DskipTests
-
-# Expose port
+# Expose application port (Render uses 8080 by default)
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "target/locallocket-backend-0.0.1-SNAPSHOT.jar"]
+# Set environment variable for server port (Spring Boot picks it automatically)
+ENV PORT=8080
+
+# Run the built JAR (note: no "-backend" in filename)
+ENTRYPOINT ["java", "-jar", "target/locallocket-0.0.1-SNAPSHOT.jar"]
