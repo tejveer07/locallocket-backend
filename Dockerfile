@@ -1,16 +1,51 @@
-# Stage 1: Build JAR using Maven
+# --------------------------
+# Stage 1: Build the JAR
+# --------------------------
 FROM maven:3.9.6-eclipse-temurin-21 AS build
+
+# Set working directory
 WORKDIR /app
+
+# Copy Maven files and source code
 COPY pom.xml .
 COPY src ./src
+
+# Build the Spring Boot JAR without running tests
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run the built JAR
+# --------------------------
+# Stage 2: Create runtime image
+# --------------------------
 FROM eclipse-temurin:21-jdk
+
+# Set working directory
 WORKDIR /app
+
+# Copy the built JAR from the build stage and rename it to app.jar
 COPY --from=build /app/target/*.jar app.jar
+
+# Expose default Spring Boot port
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+
+# Run the JAR
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+
+#This was working for Back4app
+## Stage 1: Build JAR using Maven
+#FROM maven:3.9.6-eclipse-temurin-21 AS build
+#WORKDIR /app
+#COPY pom.xml .
+#COPY src ./src
+#RUN mvn clean package -DskipTests
+#
+## Stage 2: Run the built JAR
+#FROM eclipse-temurin:21-jdk
+#WORKDIR /app
+#COPY --from=build /app/target/*.jar app.jar
+#EXPOSE 8080
+#ENTRYPOINT ["java","-jar","app.jar"]
 
 
 
