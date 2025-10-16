@@ -1,15 +1,16 @@
-FROM openjdk:21-jdk-slim
-
+# Use Maven to build JAR inside Docker
+FROM maven:3.9.3-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy your built JAR file
-COPY target/locallocket-0.0.1-SNAPSHOT.jar app.jar
+# Use slim JDK for runtime
+FROM openjdk:21-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/locallocket-0.0.1-SNAPSHOT.jar app.jar
 
-# Expose the correct port
+ENV PORT=8080
 EXPOSE 8080
 
-# Pass Render's PORT dynamically (important)
-ENV PORT=8080
-
-# Run the JAR
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
