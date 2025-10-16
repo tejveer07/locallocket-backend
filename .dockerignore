@@ -1,8 +1,28 @@
-.git/
-.gitignore
-README.md
-Dockerfile
-.dockerignore
-*.iml
+# Maven
+target/
+!target/*.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# IDE
 .idea/
+*.iml
 .vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+application-local.properties

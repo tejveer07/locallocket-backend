@@ -1,30 +1,25 @@
-# ---------- Build stage (Maven + JDK) ----------
-# Use a known-working Maven image with Temurin JDK 21 on Docker Hub
-FROM maven:3.9.3-eclipse-temurin-21 AS build
+# Use official OpenJDK as base image
+FROM openjdk:17-jdk-slim
 
+# Set working directory
 WORKDIR /app
 
-# Copy pom first to cache dependencies
+# Copy Maven wrapper and pom.xml
+COPY mvnw .
+COPY .mvn .mvn
 COPY pom.xml .
 
-# Pre-download dependencies for faster builds
-RUN mvn -B dependency:go-offline
+# Download dependencies
+RUN ./mvnw dependency:go-offline -B
 
-# Copy source and package
-COPY src ./src
-RUN mvn -B clean package -DskipTests
+# Copy source code
+COPY src src
 
-# ---------- Runtime stage (smaller image) ----------
-FROM eclipse-temurin:21-jre-jammy
+# Build the application
+RUN ./mvnw clean package -DskipTests
 
-WORKDIR /app
-
-# Copy the fat jar produced by Spring Boot (wildcard to avoid name issues)
-COPY --from=build /app/target/*.jar app.jar
-
-# Important: Back4App uses a PORT env variable for health checks; we expose 8080
-ENV PORT=8080
+# Expose port
 EXPOSE 8080
 
-# Entrypoint runs the jar
-ENTRYPOINT ["sh","-c","java -jar /app/app.jar"]
+# Run the application
+ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "target/locallocket-backend-0.0.1-SNAPSHOT.jar"]
