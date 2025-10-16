@@ -1,4 +1,4 @@
-# Use Java 21 JDK
+# Use Java 21 JDK for building
 FROM eclipse-temurin:21-jdk-jammy
 
 WORKDIR /app
@@ -6,14 +6,14 @@ WORKDIR /app
 # Copy everything
 COPY . .
 
-# Make Maven wrapper executable
-RUN chmod +x mvnw
+# Make Maven wrapper executable (if using mvnw)
+RUN chmod +x mvnw || true
 
-# Build with Maven wrapper (uses Java 21 from container)
-RUN ./mvnw clean package -DskipTests -B
+# Build with Maven
+RUN ./mvnw clean package -DskipTests -B || mvn clean package -DskipTests -B
 
 # Expose port
 EXPOSE 8080
 
-# Run application
-ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "target/locallocket-backend-0.0.1-SNAPSHOT.jar"]
+# Run application - use the actual JAR location
+ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=prod -jar target/*.jar"]
