@@ -1,28 +1,19 @@
-# Use official OpenJDK as base image
-FROM openjdk:17-jdk-slim
+# Use Java 21 JDK
+FROM eclipse-temurin:21-jdk-jammy
 
-# Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
-COPY mvnw .
-COPY .mvn .mvn
-COPY pom.xml .
+# Copy everything
+COPY . .
 
-# Fix: Grant execute permissions to Maven wrapper
+# Make Maven wrapper executable
 RUN chmod +x mvnw
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B
-
-# Copy source code
-COPY src src
-
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Build with Maven wrapper (uses Java 21 from container)
+RUN ./mvnw clean package -DskipTests -B
 
 # Expose port
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "target/locallocket-backend-0.0.1-SNAPSHOT.jar"]
+# Run application
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "target/locallocket-backend-0.0.1-SNAPSHOT.jar"]
