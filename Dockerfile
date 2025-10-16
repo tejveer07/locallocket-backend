@@ -16,4 +16,4 @@ RUN ./mvnw clean package -DskipTests -B || mvn clean package -DskipTests -B
 EXPOSE 8080
 
 # Run application - use the actual JAR location
-ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=prod -jar target/*.jar"]
+ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","target/locallocket-0.0.1-SNAPSHOT.jar"]
