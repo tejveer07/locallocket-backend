@@ -82,6 +82,67 @@ public class VendorOrderController {
         return ResponseEntity.ok(response);
     }
 
+    // Add these methods in VendorOrderController.java
+
+    @PutMapping("/{orderId}/start-preparation")
+    public ResponseEntity<OrderResponse> startPreparation(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Vendor vendor = getCurrentVendor(authentication);
+
+        // Create a minimal request object
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+
+        OrderResponse response = orderService.updateOrderStatus(
+                vendor, orderId, OrderStatus.INPROGRESS, request
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderId}/mark-ready")
+    public ResponseEntity<OrderResponse> markReady(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Vendor vendor = getCurrentVendor(authentication);
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+
+        OrderResponse response = orderService.updateOrderStatus(
+                vendor, orderId, OrderStatus.READY, request
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderId}/out-for-delivery")
+    public ResponseEntity<OrderResponse> markOutForDelivery(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Vendor vendor = getCurrentVendor(authentication);
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+
+        OrderResponse response = orderService.updateOrderStatus(
+                vendor, orderId, OrderStatus.OUTFORDELIVERY, request
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderId}/mark-delivered")
+    public ResponseEntity<OrderResponse> markDelivered(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Vendor vendor = getCurrentVendor(authentication);
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+
+        OrderResponse response = orderService.updateOrderStatus(
+                vendor, orderId, OrderStatus.DELIVERED, request
+        );
+        return ResponseEntity.ok(response);
+    }
+
+
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateOrderStatus(
             Authentication authentication,

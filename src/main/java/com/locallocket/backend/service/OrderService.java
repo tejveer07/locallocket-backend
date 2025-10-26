@@ -342,21 +342,21 @@ public class OrderService {
                 }
                 break;
             case ACCEPTED:
-                if (newStatus != OrderStatus.IN_PROGRESS && newStatus != OrderStatus.CANCELLED) {
+                if (newStatus != OrderStatus.INPROGRESS && newStatus != OrderStatus.CANCELLED) {
                     throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
                 }
                 break;
-            case IN_PROGRESS:
+            case INPROGRESS:
                 if (newStatus != OrderStatus.READY && newStatus != OrderStatus.CANCELLED) {
                     throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
                 }
                 break;
             case READY:
-                if (newStatus != OrderStatus.OUT_FOR_DELIVERY && newStatus != OrderStatus.DELIVERED && newStatus != OrderStatus.CANCELLED) {
+                if (newStatus != OrderStatus.OUTFORDELIVERY && newStatus != OrderStatus.DELIVERED && newStatus != OrderStatus.CANCELLED) {
                     throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
                 }
                 break;
-            case OUT_FOR_DELIVERY:
+            case OUTFORDELIVERY:
                 if (newStatus != OrderStatus.DELIVERED && newStatus != OrderStatus.CANCELLED) {
                     throw new BadRequestException("Invalid status transition from " + currentStatus + " to " + newStatus);
                 }
